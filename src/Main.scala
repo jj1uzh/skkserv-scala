@@ -9,10 +9,7 @@ object Main {
   def main(args: Array[String]): Unit = {
     println("hello.")
 
-    val jisyoL = StaticJisyo.fromFile("""/usr/share/skk/SKK-JISYO.L""") match {
-      case Failure(exception) => throw exception
-      case Success(value)     => value
-    }
+    val jisyoL = StaticJisyo.fromFile("""/usr/share/skk/SKK-JISYO.L""") getOrElse StaticJisyo(Map())
     val testJisyo = StaticJisyo(Map("てすと" -> "skkserv-scala running"))
     val jisyo = StaticJisyo.merge(List(testJisyo, jisyoL))
 
