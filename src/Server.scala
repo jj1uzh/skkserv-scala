@@ -7,15 +7,15 @@ import java.io.{InputStreamReader, OutputStreamWriter, PrintWriter}
 import java.net.ServerSocket
 import skkserv.jisyo.Jisyo
 
-case class Server private (reader: InputStreamReader, printer: PrintWriter, jisyo: Jisyo) {
+case class Server private (reader: InputStreamReader, printer: PrintWriter, jisyo: Jisyo[_]) {
   import Request._
 
   private def send(str: String): Unit = { printer.print(str); printer.flush() }
 
   def start(): Unit =
     requestsFrom(reader) takeWhile (_ != Close) collect {
-      case Convert(midashi)  => jisyo convert midashi map (res => s"1/$res/\n") getOrElse "4\n"
-      case Complete(midashi) => jisyo complete midashi map (res => s"1/$res/\n") getOrElse "4\n"
+      case Convert(midashi)  => Jisyo.convert(jisyo)(midashi.toList) map (res => s"1/$res/\n") getOrElse "4\n"
+      case Complete(midashi) => Jisyo.complete(jisyo)(midashi.toList) map (res => s"1/$res/\n") getOrElse "4\n"
       case Version           => s"${BuildInfo.name}.${BuildInfo.version} "
       case Hostname          => "" // 未実装
     } foreach send
@@ -24,7 +24,7 @@ case class Server private (reader: InputStreamReader, printer: PrintWriter, jisy
 final object Server {
   import skkserv.util.RichReleasable.ReleasableForComprehension
 
-  private def run(serverSocket: ServerSocket, jisyo: Jisyo): Try[Unit] = {
+  private def run(serverSocket: ServerSocket, jisyo: Jisyo[_]): Try[Unit] = {
     for {
       socket       <- serverSocket.accept()
       inputStream  <- socket.getInputStream()
@@ -35,7 +35,7 @@ final object Server {
     } yield Server(reader, printer, jisyo).start()
   } flatMap (_ => run(serverSocket, jisyo))
 
-  def run(port: Int, jisyo: Jisyo): Try[Unit] =
+  def run(port: Int, jisyo: Jisyo[_]): Try[Unit] =
     for { serverSocket <- new ServerSocket(port) } yield run(serverSocket, jisyo)
 }
 

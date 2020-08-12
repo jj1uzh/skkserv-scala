@@ -1,4 +1,4 @@
-package skkserv.jisyo
+package skkserv
 
 import scala.io.Source
 import scala.util.{Try, Using}

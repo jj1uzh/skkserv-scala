@@ -7,13 +7,15 @@ import java.net.ServerSocket
 
 object Main {
   def main(args: Array[String]): Unit = {
-    println("hello.")
+    println("loading jisyoes...")
 
     val jisyoL = StaticJisyo.fromFile("""/usr/share/skk/SKK-JISYO.L""") getOrElse StaticJisyo(Map())
     val testJisyo = StaticJisyo(Map("てすと" -> "skkserv-scala running"))
-    val jisyo = StaticJisyo.merge(List(testJisyo, jisyoL))
+    //val jisyo = StaticJisyo.merge(List(testJisyo, jisyoL))
 
-    SKKServer.run(port = 1178, jisyo) match {
+    println("starting server...")
+
+    SKKServer.run(port = 1178, testJisyo) match {
       case Failure(exception) => println(exception.getMessage())
       case Success(_)         => ()
     }
