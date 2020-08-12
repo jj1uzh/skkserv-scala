@@ -12,7 +12,7 @@ class ServerSpec extends AnyWordSpec {
       val req = """1a """
       val res = new StringWriter()
       val jisyo = skkserv.jisyo.StaticJisyo(Map("a" -> "b"))
-      val server = Server(new InputStreamReader(new ByteArrayInputStream(req.getBytes())), new PrintWriter(res), jisyo)
+      val server = Server(Source.fromInputStream(new ByteArrayInputStream(req.getBytes())), new PrintWriter(res), jisyo)
 
       server.start()
 

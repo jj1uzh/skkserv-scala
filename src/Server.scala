@@ -3,40 +3,40 @@ package skkserv.server
 import buildinfo.BuildInfo
 import scala.io.Source
 import scala.util.{Using, Try}
-import java.io.{InputStreamReader, OutputStreamWriter, PrintWriter}
+import java.io.{OutputStreamWriter, PrintWriter}
 import java.net.ServerSocket
 import skkserv.jisyo.Jisyo
 
-case class Server private (reader: InputStreamReader, printer: PrintWriter, jisyo: Jisyo[_]) {
+case class Server private (source: Source, printer: PrintWriter, jisyo: Jisyo[_]) {
   import Request._
+  import Jisyo.{convert, complete}
 
   private def send(str: String): Unit = { printer.print(str); printer.flush() }
 
   def start(): Unit =
-    requestsFrom(reader) takeWhile (_ != Close) collect {
-      case Convert(midashi)  => Jisyo.convert(jisyo)(midashi.toList) map (res => s"1/$res/\n") getOrElse "4\n"
-      case Complete(midashi) => Jisyo.complete(jisyo)(midashi.toList) map (res => s"1/$res/\n") getOrElse "4\n"
+    requestsFrom(source) takeWhile (_ != Close) collect {
+      case Convert(midashi)  => convert(jisyo)(midashi.toList) map (res => s"1/$res/\n") getOrElse "4\n"
+      case Complete(midashi) => complete(jisyo)(midashi.toList) map (res => s"1/$res/\n") getOrElse "4\n"
       case Version           => s"${BuildInfo.name}.${BuildInfo.version} "
       case Hostname          => "" // 未実装
     } foreach send
 }
 
 final object Server {
-  import skkserv.util.RichReleasable.ReleasableForComprehension
-
   private def run(serverSocket: ServerSocket, jisyo: Jisyo[_]): Try[Unit] = {
-    for {
-      socket       <- serverSocket.accept()
-      inputStream  <- socket.getInputStream()
-      reader       <- new InputStreamReader(inputStream, "EUC-JP")
-      outputStream <- socket.getOutputStream()
-      writer       <- new OutputStreamWriter(outputStream, "EUC-JP")
-      printer      <- new PrintWriter(writer)
-    } yield Server(reader, printer, jisyo).start()
+    Using.Manager { use =>
+      val socket = use(serverSocket.accept())
+      val inputStream = use(socket.getInputStream())
+      val source = use(Source.fromInputStream(inputStream, "EUC-JP"))
+      val outputStream = use(new OutputStreamWriter(socket.getOutputStream, "EUC-JP"))
+      val printer = use(new PrintWriter(outputStream))
+
+      Server(source, printer, jisyo).start()
+    }
   } flatMap (_ => run(serverSocket, jisyo))
 
   def run(port: Int, jisyo: Jisyo[_]): Try[Unit] =
-    for { serverSocket <- new ServerSocket(port) } yield run(serverSocket, jisyo)
+    Using(new ServerSocket(port))(run(_, jisyo))
 }
 
 final object Request {
@@ -47,28 +47,6 @@ final object Request {
   final case object Hostname extends Status
   final case class Complete(midashi: String) extends Status
   final case class Invalid(number: Char) extends Status
-
-  def requestsFrom(reader: InputStreamReader): Iterator[Status] =
-    new Iterator[Status] {
-
-      override def hasNext: Boolean = reader.ready
-
-      private def nextUntilWhitespace: String =
-        reader.read().toChar match {
-          case ' ' => ""
-          case ch  => ch +: nextUntilWhitespace
-        }
-
-      override def next(): Status =
-        reader.read().toChar match {
-          case '0'   => Close
-          case '1'   => Convert(nextUntilWhitespace)
-          case '2'   => Version
-          case '3'   => Hostname
-          case '4'   => Complete(nextUntilWhitespace)
-          case other => Invalid(other)
-        }
-    }
 
   def requestsFrom(source: Source): Iterator[Status] =
     new Iterator[Status] {

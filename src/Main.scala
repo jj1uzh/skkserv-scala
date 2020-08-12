@@ -11,7 +11,6 @@ object Main {
 
     val jisyoL = StaticJisyo.fromFile("""/usr/share/skk/SKK-JISYO.L""") getOrElse StaticJisyo(Map())
     val testJisyo = StaticJisyo(Map("てすと" -> "skkserv-scala running"))
-    //val jisyo = StaticJisyo.merge(List(testJisyo, jisyoL))
 
     println("starting server...")
 

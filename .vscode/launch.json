@@ -8,7 +8,7 @@
       "type": "scala",
       "request": "launch",
       "name": "Untitled",
-      "mainClass": "Main",
+      "mainClass": "skkserv.Main",
       "args": [],
       "jvmOptions": []
     }
