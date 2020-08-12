@@ -22,11 +22,11 @@ object StaticJisyo {
     val grouped = entries
       .filter { case (midashi, _) => midashi.nonEmpty }
       .groupBy { case (midashi, _) => midashi.head }
+
     StaticJisyo(
       entries get "",
       grouped.transform {
-        case (_, entries) =>
-          StaticJisyo(entries.map { case (midashi, candidates) => (midashi.tail, candidates) })
+        case (_, entries) => StaticJisyo(entries.map { case (midashi, candidates) => (midashi.tail, candidates) })
       }
     )
   }
@@ -51,7 +51,7 @@ object StaticJisyo {
       .flatten
       .toMap
 
-    ???
+    StaticJisyo(entries)
   }
 
   /**
