@@ -5,25 +5,26 @@ import scala.io.Source
 import scala.util.{Using, Try}
 import java.io.{OutputStreamWriter, PrintWriter}
 import java.net.ServerSocket
-import skkserv.jisyo.Jisyo
+import skkserv.jisyo.StaticJisyo
 
-case class Server private (source: Source, printer: PrintWriter, jisyo: Jisyo[_]) {
+case class Server[T] private (source: Source, printer: PrintWriter, jisyoLike: T)(implicit jisyo: StaticJisyo[T]) {
   import Request._
-  import Jisyo.{convert, complete}
 
-  private def send(str: String): Unit = { printer.print(str); printer.flush() }
+  private val convert: String => Option[String] = jisyo.convert(jisyoLike) _
+  private val complete: String => Option[String] = jisyo.complete(jisyoLike) _
+  private val send: String => Unit = (str) => { printer.print(str); printer.flush() }
 
   def start(): Unit =
     requestsFrom(source) takeWhile (_ != Close) collect {
-      case Convert(midashi)  => convert(jisyo)(midashi.toList) map (res => s"1/$res/\n") getOrElse "4\n"
-      case Complete(midashi) => complete(jisyo)(midashi.toList) map (res => s"1/$res/\n") getOrElse "4\n"
+      case Convert(midashi)  => convert(midashi) map (res => s"1/$res/\n") getOrElse "4\n"
+      case Complete(midashi) => complete(midashi) map (res => s"1/$res/\n") getOrElse "4\n"
       case Version           => s"${BuildInfo.name}.${BuildInfo.version} "
       case Hostname          => "" // 未実装
     } foreach send
 }
 
 final object Server {
-  private def run(serverSocket: ServerSocket, jisyo: Jisyo[_]): Try[Unit] = {
+  private def run[T](serverSocket: ServerSocket, jisyoLike: T)(implicit jisyo: StaticJisyo[T]): Try[Unit] = {
     Using.Manager { use =>
       val socket = use(serverSocket.accept())
       val inputStream = use(socket.getInputStream())
@@ -31,12 +32,12 @@ final object Server {
       val outputStream = use(new OutputStreamWriter(socket.getOutputStream, "EUC-JP"))
       val printer = use(new PrintWriter(outputStream))
 
-      Server(source, printer, jisyo).start()
+      Server(source, printer, jisyoLike).start()
     }
-  } flatMap (_ => run(serverSocket, jisyo))
+  } flatMap (_ => run(serverSocket, jisyoLike))
 
-  def run(port: Int, jisyo: Jisyo[_]): Try[Unit] =
-    Using(new ServerSocket(port))(run(_, jisyo))
+  def run[T](port: Int, jisyoLike: T)(implicit jisyo: StaticJisyo[T]): Try[Unit] =
+    Using(new ServerSocket(port))(run(_, jisyoLike))
 }
 
 final object Request {
