@@ -4,51 +4,48 @@ import scala.io.Source
 import scala.util.{Try, Using}
 
 /**
-  * 静的辞書の型クラス
+  * 辞書。変換と補完ができる
   */
-trait StaticJisyo[T] {
+trait Jisyo {
 
   /**
-    * 見出し→候補 のMapから生成
-    *
-    * @param entries
-    * @return
-    */
-  def fromEntries(entries: Map[String, String]): T
-
-  /**
-    * @param jisyo
+    * 見出し語を変換
     * @param midashi
     * @return /で区切った変換候補
     */
-  def convert(jisyo: T)(midashi: String): Option[String]
+  def convert(midashi: String): Option[String]
 
   /**
-    * @param jisyo
+    * 見出し語を補完
     * @param midashi
     * @return /で区切った補完候補
     */
-  def complete(jisyo: T)(midashi: String): Option[String]
+  def complete(midashi: String): Option[String]
 }
 
-object StaticJisyo {
+object Jisyo {
 
   /**
     * 見出し語→候補のMap
     */
-  type Entries = Map[String, String]
+  type StaticEntries = Map[String, String]
+
+  /**
+    * 見出し語→動的候補のMap
+    */
+  type DynamicEntries = Map[String, () => String]
 
   private val entryLinePattern = """([\S]+)\s+/(.*)/""".r
   private val ignoringLinePattern = """;;.*|\s*""".r
 
   /**
-    * sourceからEntriesを作成する。
+    * sourceからEntriesを作成
     *
-    * @param sourceName sourceの名前。エラー表示に必要。
+    * @param sourceName sourceの名前。エラー表示に必要
     * @param source 入力ソース
     * @return
     */
-  def entriesFromSource(sourceName: String, source: Source): Entries =
+  def entriesFromSource(sourceName: String, source: Source): StaticEntries =
     source
       .getLines()
       .zipWithIndex
@@ -62,11 +59,11 @@ object StaticJisyo {
       .toMap
 
   /**
-    * 辞書ファイルを読込む。
+    * 辞書ファイルを読込む
     *
     * @param path ファイルパス
     * @return
     */
-  def entriesFromFile(path: String): Try[Entries] =
+  def entriesFromFile(path: String): Try[StaticEntries] =
     Using(Source.fromFile(path, "EUC-JP"))(entriesFromSource(sourceName = path, _))
 }

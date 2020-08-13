@@ -1,13 +1,13 @@
 package skkserv.jisyo
 
-object MapJisyo {
+import Jisyo.{StaticEntries, DynamicEntries}
 
-  implicit object MapIsStaticJisyo extends StaticJisyo[Map[String, String]] {
+final case class StaticMapJisyo(entries: StaticEntries) extends Jisyo {
+  def convert(midashi: String): Option[String] = entries get midashi
+  def complete(midashi: String): Option[String] = None
+}
 
-    def fromEntries(entries: Map[String, String]): Map[String, String] = entries
-
-    def convert(jisyo: Map[String, String])(midashi: String): Option[String] = jisyo get midashi
-
-    def complete(jisyo: Map[String, String])(midashi: String): Option[String] = None
-  }
+final case class DynamicMapJisyo(entries: DynamicEntries) extends Jisyo {
+  def convert(midashi: String): Option[String] = entries get midashi map (_())
+  def complete(midashi: String): Option[String] = None
 }

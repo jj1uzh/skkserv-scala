@@ -1,34 +1,36 @@
 package skkserv.jisyo
 
+import Jisyo.StaticEntries
+import TrieJisyo.Trie
+
+final case class StaticTrieJisyo(root: Trie[String]) extends Jisyo {
+  def convert(midashi: String): Option[String] = root get midashi.toList
+  def complete(midashi: String): Option[String] = None
+}
+
+final case class DynamicTrieJisyo(root: Trie[() => String]) extends Jisyo {
+  def convert(midashi: String): Option[String] = root get midashi.toList map (_())
+  def complete(midashi: String): Option[String] = None
+}
+
 object TrieJisyo {
 
-  final case class TrieNode[K, V](value: Option[V], children: Map[K, TrieNode[K, V]])
-
-  implicit object TrieIsStaticJisyo extends StaticJisyo[TrieNode[Char, String]] {
-
-    def complete(jisyo: TrieNode[Char, String])(midashi: String): Option[String] = None
-
-    def convert(jisyo: TrieNode[Char, String])(midashi: String): Option[String] =
-      convertImpl(jisyo)(midashi.toSeq)
-
-    private def convertImpl(jisyo: TrieNode[Char, String])(chars: Seq[Char]): Option[String] =
-      chars match {
-        case Nil          => jisyo.value
-        case head :: tail => jisyo.children.get(head).flatMap(convertImpl(_)(tail))
+  final case class Trie[V](value: Option[V], children: Map[Char, Trie[V]]) {
+    def get(key: List[Char]): Option[V] =
+      key match {
+        case Nil                 => value
+        case headChar :: tailKey => children get headChar flatMap (_ get tailKey)
       }
+  }
 
-    def fromEntries(entries: Map[String, String]): TrieNode[Char, String] = {
-      val grouped = entries
+  object Trie {
+    def fromEntries(entries: StaticEntries): Trie[String] = {
+      val children = entries
         .filter { case (midashi, _) => midashi.nonEmpty }
         .groupBy { case (midashi, _) => midashi.head }
+        .transform { case (_, entries) => fromEntries(entries.map { case (midashi, c) => (midashi.tail, c) }) }
 
-      TrieNode(
-        entries get "",
-        grouped.transform {
-          case (_, entries) =>
-            fromEntries(entries.map { case (midashi, candidates) => (midashi.tail, candidates) })
-        }
-      )
+      Trie(value = entries get "", children)
     }
   }
 }
