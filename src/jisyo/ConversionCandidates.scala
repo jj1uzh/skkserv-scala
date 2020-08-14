@@ -8,7 +8,7 @@ final case class ConversionCandidates(
   def get: Option[String] = {
     dynamic match {
       case Nil => static
-      case d   => Some(d.map(_.apply).mkString("/") concat (static getOrElse ""))
+      case d   => Some(d.map(_.apply).mkString("/") concat (static.map('/' +: _) getOrElse ""))
     }
   }
 
