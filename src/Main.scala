@@ -11,18 +11,16 @@ object Main {
   def main(args: Array[String]): Unit = {
     println("loading jisyoes...")
 
-    val jisyoLEntries = Jisyo.entriesFromFile("""/usr/share/skk/SKK-JISYO.L""").get
-    val jisyoZipEntries = Jisyo.entriesFromFile("""/usr/share/skk/SKK-JISYO.zipcode""").get
-    val zipTrieJisyo = StaticTrieJisyo(Trie.fromEntries(jisyoZipEntries))
-    val testTrieJisyo = DynamicMapJisyo(
-      Map(
-        "いま" -> (() => LocalDateTime.now.toString)
-      )
-    )
+    val jisyoL = Jisyo.entriesFromFile("""/usr/share/skk/SKK-JISYO.L""").get
+    val jisyoZip = Jisyo.entriesFromFile("""/usr/share/skk/SKK-JISYO.zipcode""").get
+    val jisyoNow = Map(
+      "いま" -> Seq(() => LocalDateTime.now.toString)
+    ).transform { case (_, c) => ConversionCandidates(c) }
+    val merged = List(jisyoL, jisyoZip, jisyoNow).reduce(Jisyo.merge)
 
     println("starting server...")
 
-    Server.run(port = 1178, testTrieJisyo) match {
+    Server.run(port = 1178, TrieJisyo(merged)) match {
       case Failure(exception) => println(exception.getMessage())
       case Success(_)         => ()
     }

@@ -1,19 +1,17 @@
 package skkserv.jisyo
 
-import Jisyo.StaticEntries
+import Jisyo.Entries
 import TrieJisyo.Trie
 
-final case class StaticTrieJisyo(root: Trie[String]) extends Jisyo {
-  def convert(midashi: String): Option[String] = root get midashi.toList
-  def complete(midashi: String): Option[String] = None
-}
-
-final case class DynamicTrieJisyo(root: Trie[() => String]) extends Jisyo {
-  def convert(midashi: String): Option[String] = root get midashi.toList map (_())
+final case class TrieJisyo(root: Trie[ConversionCandidates]) extends Jisyo {
+  def convert(midashi: String): Option[String] = root get midashi.toList flatMap (_.get)
   def complete(midashi: String): Option[String] = None
 }
 
 object TrieJisyo {
+
+  def apply(entries: Entries): TrieJisyo =
+    TrieJisyo(Trie.fromEntries(entries))
 
   final case class Trie[V](value: Option[V], children: Map[Char, Trie[V]]) {
     def get(key: List[Char]): Option[V] =
@@ -24,7 +22,7 @@ object TrieJisyo {
   }
 
   object Trie {
-    def fromEntries(entries: StaticEntries): Trie[String] = {
+    def fromEntries(entries: Entries): Trie[ConversionCandidates] = {
       val children = entries
         .filter { case (midashi, _) => midashi.nonEmpty }
         .groupBy { case (midashi, _) => midashi.head }

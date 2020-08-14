@@ -1,13 +1,8 @@
 package skkserv.jisyo
 
-import Jisyo.{StaticEntries, DynamicEntries}
+import Jisyo.Entries
 
-final case class StaticMapJisyo(entries: StaticEntries) extends Jisyo {
-  def convert(midashi: String): Option[String] = entries get midashi
-  def complete(midashi: String): Option[String] = None
-}
-
-final case class DynamicMapJisyo(entries: DynamicEntries) extends Jisyo {
-  def convert(midashi: String): Option[String] = entries get midashi map (_())
+final case class MapJisyo(entries: Entries) extends Jisyo {
+  def convert(midashi: String): Option[String] = entries get midashi flatMap (_.get)
   def complete(midashi: String): Option[String] = None
 }
