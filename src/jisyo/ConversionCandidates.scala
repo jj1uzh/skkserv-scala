@@ -14,9 +14,11 @@ final case class ConversionCandidates(
 
   def append(that: ConversionCandidates): ConversionCandidates = {
     val newStatic = (this.static, that.static) match {
-      case (Some(l), Some(r)) => Some(s"$l/$r")
-      case (l, None)          => l
-      case (_, r)             => r
+      case (Some(l), Some(r)) => {
+        Some((l.split('/') ++ r.split('/')).distinct mkString "/")
+      }
+      case (l, None) => l
+      case (_, r)    => r
     }
     ConversionCandidates(this.dynamic ++ that.dynamic, newStatic)
   }
