@@ -25,7 +25,8 @@ object Jisyo {
   /**
     * 見出し語→候補のMap
     */
-  type Entries = Map[String, ConversionCandidates]
+  type Entries = Map[String, ConversionCandidates] // TODO: Entriesをクラスにする
+  val emptyEntries = Map[String, ConversionCandidates]()
 
   private val entryLinePattern = """([\S]+)\s+/(.*)/""".r
   private val ignoringLinePattern = """;;.*|\s*""".r

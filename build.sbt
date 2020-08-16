@@ -9,6 +9,12 @@ scalaSource in Test := baseDirectory.value / "test"
 
 // enablePlugins(ScalaNativePlugin)
 
+libraryDependencies ++= Seq(
+  "io.circe" %% "circe-core",
+  "io.circe" %% "circe-generic",
+  "io.circe" %% "circe-parser"
+).map(_ % "0.13.0")
+
 enablePlugins(BuildInfoPlugin)
 buildInfoKeys := Seq[BuildInfoKey](name, version)
 buildInfoPackage := """buildinfo"""
