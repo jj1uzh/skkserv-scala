@@ -1,17 +1,19 @@
 package skkserv
 
-import Config.DynamicJisyoes
+import scala.util.{Try, Using}
+import scala.io.Source
+import io.circe.Error
+import io.circe.parser.decode
+import io.circe.generic.auto._
 
-case class Config(
-    jisyoType: String = "hash",
-    dynamicJisyoes: DynamicJisyoes = DynamicJisyoes(),
-    jisyoDir: String = """/usr/share/skk""",
-    jisyoFiles: Seq[String] = Nil
+final case class Config(
+    jisyoPlaces: List[String] = Nil
 )
 
 object Config {
-
-  case class DynamicJisyoes(
-      datetime: Boolean = true
-  )
+  def apply(path: String): Try[Config] =
+    for {
+      configStr <- Using(Source fromFile path)(_.getLines().mkString)
+      config <- decode[Config](configStr).toTry
+    } yield config
 }

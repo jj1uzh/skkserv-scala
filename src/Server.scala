@@ -1,78 +1,80 @@
 package skkserv
 
-import buildinfo.BuildInfo
-import scala.io.Source
-import scala.util.{Using, Try}
 import java.io.{OutputStreamWriter, PrintWriter}
 import java.net.ServerSocket
-import skkserv.jisyo.Jisyo
+import scala.annotation.tailrec
+import scala.io.{Codec, Source}
+import scala.util.{Failure, Success, Using, Try}
+import scala.util.control.Exception.noCatch
+import scala.util.chaining.scalaUtilChainingOps
+import buildinfo.BuildInfo
 
-/**
-  * skkserv実装
-  *
-  * @param source 入力
-  * @param printer 出力
-  * @param jisyo 辞書
-  */
-case class Server(source: Source, printer: PrintWriter, jisyo: Jisyo) {
-  import Request._
+case class Server(src: Source, printer: PrintWriter, jisyoFiles: List[JisyoFile]) {
+  import Server.Request
+  import Server.Request.{Close, Convert, Complete, Version, Hostname}
+  import JisyoFile.Implicits.OptionCandidatesOperators
 
   private def send: String => Unit = (str) => { printer.print(str); printer.flush() }
 
-  def run(): Unit =
-    requestsFrom(source) takeWhile (_ != Close) collect {
-      case Convert(midashi)  => jisyo convert midashi map (res => s"1/$res/\n") getOrElse "4\n"
-      case Complete(midashi) => jisyo complete midashi map (res => s"1/$res/\n") getOrElse "4\n"
-      case Version           => s"${BuildInfo.name}.${BuildInfo.version} "
-      case Hostname          => "" // 未実装
-    } foreach send
+  def run()(implicit codec: Codec): Unit =
+    noCatch andFinally send("0") apply {
+      Request from src takeWhile (_ != Close) collect {
+        case Convert(midashi) =>
+          jisyoFiles map (_ convert midashi) reduce (_ ++ _) map (res => s"1${res.value}\n") getOrElse "4\n" tap println
+        case Complete(midashi) => "4\n" // unimplemented
+        case Version           => s"${BuildInfo.name}.${BuildInfo.version} " tap println
+        case Hostname          => "" // unimplemented
+      } foreach send
+    }
 }
 
 final object Server {
 
-  private def run(serverSocket: ServerSocket, jisyo: Jisyo): Try[Unit] = {
+  @tailrec
+  def run(port: Int, jisyoFiles: List[JisyoFile])(implicit codec: Codec): Try[Unit] = {
     Using.Manager { use =>
+      val serverSocket = use(new ServerSocket(port))
       val socket = use(serverSocket.accept())
       val inputStream = use(socket.getInputStream())
-      val source = use(Source.fromInputStream(inputStream, "EUC-JP"))
-      val outputStream = use(new OutputStreamWriter(socket.getOutputStream, "EUC-JP"))
+      val source = use(Source fromInputStream inputStream)
+      val outputStream = use(new OutputStreamWriter(socket.getOutputStream, codec.name))
       val printer = use(new PrintWriter(outputStream))
-
-      Server(source, printer, jisyo).run()
+      Server(source, printer, jisyoFiles).run()
+    } match {
+      case f @ Failure(_) => f
+      case Success(_)     => run(port, jisyoFiles)
     }
-  } flatMap (_ => run(serverSocket, jisyo))
+  }
 
-  def run(port: Int, jisyo: Jisyo): Try[Unit] =
-    Using(new ServerSocket(port))(run(_, jisyo))
-}
+  sealed trait Request
+  object Request {
+    final case object Close extends Request
+    final case class Convert(midashi: String) extends Request
+    final case object Version extends Request
+    final case object Hostname extends Request
+    final case class Complete(midashi: String) extends Request
+    final case class Invalid(number: Char) extends Request
 
-final object Request {
-  sealed trait Status
-  final case object Close                    extends Status
-  final case class Convert(midashi: String)  extends Status
-  final case object Version                  extends Status
-  final case object Hostname                 extends Status
-  final case class Complete(midashi: String) extends Status
-  final case class Invalid(number: Char)     extends Status
+    def from(source: Source): Iterator[Request] =
+      new Iterator[Request] {
 
-  def requestsFrom(source: Source): Iterator[Status] =
-    new Iterator[Status] {
-      def hasNext: Boolean = source.hasNext
+        def hasNext: Boolean = source.hasNext
 
-      private def nextUntilWhitespace: String =
-        source.next match {
-          case ' ' => ""
-          case ch  => ch +: nextUntilWhitespace
-        }
+        private def nextUntilWhitespace: String =
+          source.next() match {
+            case ' ' => ""
+            case ch  => ch +: nextUntilWhitespace
+          }
 
-      def next(): Status =
-        source.next match {
-          case '0'   => Close
-          case '1'   => Convert(nextUntilWhitespace)
-          case '2'   => Version
-          case '3'   => Hostname
-          case '4'   => Complete(nextUntilWhitespace)
-          case other => Invalid(other)
-        }
-    }
+        def next(): Request =
+          source.next() match {
+            case '0'   => Close
+            case '1'   => Convert(nextUntilWhitespace)
+            case '2'   => Version
+            case '3'   => Hostname
+            case '4'   => Complete(nextUntilWhitespace)
+            case other => Invalid(other)
+          }
+      }
+  }
 }

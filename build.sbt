@@ -1,8 +1,9 @@
 name := """skkserv-scala"""
 version := """0.1"""
 
-scalaVersion := """2.13.2"""
+scalaVersion := """2.13.3"""
 scalacOptions ++= Seq("-feature", "-unchecked", "-deprecation")
+// scalacOptions ++= { if (isDotty.value) Seq("-source:3.0-migration") else Nil }
 
 scalaSource in Compile := baseDirectory.value / "src"
 scalaSource in Test := baseDirectory.value / "test"
@@ -20,7 +21,7 @@ buildInfoKeys := Seq[BuildInfoKey](name, version)
 buildInfoPackage := """buildinfo"""
 
 resolvers += "Artima Maven Repository" at "http://repo.artima.com/releases"
-libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.0"
-libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0" % "test"
+libraryDependencies += ("org.scalactic" %% "scalactic" % "3.2.2")
+libraryDependencies += ("org.scalatest" %% "scalatest" % "3.2.2" % "test")
 logBuffered in Test := false
 parallelExecution in Test := false

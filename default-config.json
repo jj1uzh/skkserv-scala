@@ -1,10 +1,5 @@
 {
-  "jisyoType": "hash",
-  "dynamicJisyoes": {
-    "datetime": true
-  },
-  "jisyoDir": "/usr/share/skk",
-  "jisyoFiles": [
-    "SKK-JISYO.L"
+  "jisyoPlaces": [
+    "/usr/share/skk/SKK-JISYO.L"
   ]
 }
