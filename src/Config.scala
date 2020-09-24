@@ -2,7 +2,6 @@ package skkserv
 
 import scala.util.{Try, Using}
 import scala.io.Source
-import io.circe.Error
 import io.circe.parser.decode
 import io.circe.generic.auto._
 

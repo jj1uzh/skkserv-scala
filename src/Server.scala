@@ -21,7 +21,7 @@ case class Server(src: Source, printer: PrintWriter, jisyoFiles: List[JisyoFile]
       Request from src takeWhile (_ != Close) collect {
         case Convert(midashi) =>
           jisyoFiles map (_ convert midashi) reduce (_ ++ _) map (res => s"1${res.value}\n") getOrElse "4\n" tap println
-        case Complete(midashi) => "4\n" // unimplemented
+        case Complete(_) => "4\n" // unimplemented
         case Version           => s"${BuildInfo.name}.${BuildInfo.version} " tap println
         case Hostname          => "" // unimplemented
       } foreach send

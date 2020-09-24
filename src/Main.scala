@@ -1,8 +1,7 @@
 package skkserv
 
-import java.nio.charset.Charset
 import scala.util.{Failure, Success}
-import scala.io.{Codec, Source}
+import scala.io.Codec
 
 object Main {
 

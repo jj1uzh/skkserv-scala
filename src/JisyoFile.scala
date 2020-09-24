@@ -3,8 +3,6 @@ package skkserv
 import java.io.File
 import scala.io.{Codec, Source}
 import scala.util.chaining.scalaUtilChainingOps
-import scala.util.Try
-import scala.util.Using.Releasable
 
 final case class JisyoFile(file: File, okuriAriRange: Range, okuriNasiRange: Range) {
   import skkserv.JisyoFile.Candidates

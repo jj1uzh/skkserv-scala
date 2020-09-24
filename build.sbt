@@ -2,13 +2,18 @@ name := """skkserv-scala"""
 version := """0.1"""
 
 scalaVersion := """2.13.3"""
-scalacOptions ++= Seq("-feature", "-unchecked", "-deprecation")
-// scalacOptions ++= { if (isDotty.value) Seq("-source:3.0-migration") else Nil }
+scalacOptions ++= Seq(
+  "-feature",
+  "-unchecked",
+  "-deprecation",
+  "-Xlint",
+  "-Ywarn-dead-code",
+  "-Ywarn-numeric-widen",
+  "-Ywarn-unused"
+)
 
 scalaSource in Compile := baseDirectory.value / "src"
 scalaSource in Test := baseDirectory.value / "test"
-
-// enablePlugins(ScalaNativePlugin)
 
 libraryDependencies ++= Seq(
   "io.circe" %% "circe-core",
@@ -20,7 +25,7 @@ enablePlugins(BuildInfoPlugin)
 buildInfoKeys := Seq[BuildInfoKey](name, version)
 buildInfoPackage := """buildinfo"""
 
-resolvers += "Artima Maven Repository" at "http://repo.artima.com/releases"
+resolvers += "Artima Maven Repository" at "https://repo.artima.com/releases"
 libraryDependencies += ("org.scalactic" %% "scalactic" % "3.2.2")
 libraryDependencies += ("org.scalatest" %% "scalatest" % "3.2.2" % "test")
 logBuffered in Test := false
