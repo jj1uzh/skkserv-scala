@@ -21,13 +21,16 @@ object Main {
       }
 
     val jisyoFiles =
-      for {
-        path <- config.jisyoPlaces
-      } yield JisyoFile fromFile path
-
+      config.jisyoPlaces.foldRight(Nil: List[JisyoFile])((path, acc) =>
+        JisyoFile fromFile path match {
+          case Left(msg) => println(msg); acc
+          case Right(jf) => jf :: acc
+        }
+      )
+    jisyoFiles foreach println
     Server.run(1178, jisyoFiles) match {
       case Failure(exception) => println(exception)
-      case Success(_) => ()
+      case Success(_)         => ()
     }
 
     println("bye.")
