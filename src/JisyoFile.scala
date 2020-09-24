@@ -5,7 +5,7 @@ import scala.io.{Codec, Source}
 import scala.util.chaining.scalaUtilChainingOps
 import scala.util.control.Exception.nonFatalCatch
 
-final case class JisyoFile(file: File, okuriAriRange: Range, okuriNasiRange: Range) {
+final case class JisyoFile(file: File, okuriAriRange: Option[Range], okuriNasiRange: Option[Range]) {
   import skkserv.JisyoFile.Candidates
 
   def convert(midashi: String)(implicit codec: Codec): Option[Candidates] = {
@@ -25,11 +25,20 @@ object JisyoFile {
     nonFatalCatch withApply (e => Left(s"[error] failed to load jisyo file ${path}: ${e.getMessage()}")) apply {
       val file = new File(path)
       val src = Source fromFile file
-      val lines = src.getLines()
+      val lines = src.getLines().toArray
       val okuriAriSignIndex = lines indexOf ";; okuri-ari entries."
+      assert(okuriAriSignIndex != -1)
       val okuriNasiSignIndex = lines indexOf ";; okuri-nasi entries."
-      val okuriAriRange = (okuriAriSignIndex + 1) until okuriNasiSignIndex
-      val okuriNasiRange = (okuriNasiSignIndex + 1) until lines.length
+      assert(okuriNasiSignIndex != -1)
+
+      val okuriAriRange =
+        if (okuriNasiSignIndex == okuriAriSignIndex + 1) None
+        else Some((okuriAriSignIndex + 1) until okuriNasiSignIndex)
+
+      val okuriNasiRange =
+        if (lines.length == okuriAriSignIndex + 1) None
+        else Some((okuriNasiSignIndex + 1) until lines.length)
+
       Right(JisyoFile(file, okuriAriRange, okuriNasiRange))
     }
   }
