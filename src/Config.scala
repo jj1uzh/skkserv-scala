@@ -6,7 +6,7 @@ import io.circe.parser.decode
 import io.circe.generic.auto._
 
 final case class Config(
-    jisyoPlaces: List[String] = Nil
+    jisyoPlaces: Vector[String] = Vector.empty
 )
 
 object Config {

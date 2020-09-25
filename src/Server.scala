@@ -9,10 +9,9 @@ import scala.util.control.Exception.noCatch
 import scala.util.chaining.scalaUtilChainingOps
 import buildinfo.BuildInfo
 
-case class Server(src: Source, printer: PrintWriter, jisyoFiles: List[JisyoFile]) {
+case class Server(src: Source, printer: PrintWriter, jisyoFiles: Vector[JisyoFile]) {
   import Server.Request
   import Server.Request.{Close, Convert, Complete, Version, Hostname}
-  import JisyoFile.Implicits.OptionCandidatesOperators
 
   private def send: String => Unit = (str) => { printer.print(str); printer.flush() }
 
@@ -20,10 +19,13 @@ case class Server(src: Source, printer: PrintWriter, jisyoFiles: List[JisyoFile]
     noCatch andFinally send("0") apply {
       Request from src takeWhile (_ != Close) collect {
         case Convert(midashi) =>
-          jisyoFiles map (_ convert midashi) reduce (_ ++ _) map (res => s"1${res.value}\n") getOrElse "4\n" tap println
+          (jisyoFiles flatMap (_ convert midashi)).distinct match {
+            case v if v.size == 0 => "4\n"
+            case v                => s"1/${v mkString "/"}/\n" tap print
+          }
         case Complete(_) => "4\n" // unimplemented
-        case Version           => s"${BuildInfo.name}.${BuildInfo.version} " tap println
-        case Hostname          => "" // unimplemented
+        case Version     => s"${BuildInfo.name}.${BuildInfo.version} " tap println
+        case Hostname    => "" // unimplemented
       } foreach send
     }
 }
@@ -31,7 +33,7 @@ case class Server(src: Source, printer: PrintWriter, jisyoFiles: List[JisyoFile]
 final object Server {
 
   @tailrec
-  def run(port: Int, jisyoFiles: List[JisyoFile])(implicit codec: Codec): Try[Unit] = {
+  def run(port: Int, jisyoFiles: Vector[JisyoFile])(implicit codec: Codec): Try[Unit] = {
     Using.Manager { use =>
       val serverSocket = use(new ServerSocket(port))
       val socket = use(serverSocket.accept())

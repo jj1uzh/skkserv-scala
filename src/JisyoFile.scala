@@ -2,18 +2,17 @@ package skkserv
 
 import java.io.File
 import scala.io.{Codec, Source}
-import scala.util.chaining.scalaUtilChainingOps
 import scala.util.control.Exception.nonFatalCatch
 
 final case class JisyoFile(file: File, okuriAriRange: Option[Range], okuriNasiRange: Option[Range]) {
-  import skkserv.JisyoFile.Candidates
+  
+  private val entryLinePtrn = """\S+\s+/(.*)/""".r
 
-  def convert(midashi: String)(implicit codec: Codec): Option[Candidates] = {
-    val lines = Source.fromFile(file).getLines()
-    for {
-      entry <- lines find (_ startsWith midashi)
-      candidates = entry.splitAt(entry indexOf ' ')._2 pipe Candidates
-    } yield candidates
+  def convert(midashi: String)(implicit codec: Codec): Vector[String] = { // TODO: 二分探索
+    val lines = (Source fromFile file).getLines().toVector
+    lines find (_ startsWith midashi) map {
+      case entryLinePtrn(cand) => (cand split '/').toVector
+    } getOrElse Vector.empty
   }
 }
 
@@ -40,25 +39,6 @@ object JisyoFile {
         else Some((okuriNasiSignIndex + 1) until lines.length)
 
       Right(JisyoFile(file, okuriAriRange, okuriNasiRange))
-    }
-  }
-
-  final case class Candidates(value: String) extends AnyVal {
-    def split: Array[String] = value drop 1 dropRight 1 split '/'
-  }
-
-  object Implicits {
-
-    implicit class OptionCandidatesOperators(optCands: Option[Candidates]) {
-      def concat(another: Option[Candidates]): Option[Candidates] =
-        (optCands, another) match {
-          case (Some(cands0), Some(cands1)) =>
-            (cands0.split ++ cands1.split).distinct.mkString("/", "/", "/") pipe Candidates pipe Option.apply
-          case (c @ Some(_), None) => c
-          case (None, c)           => c
-        }
-
-      @inline def ++ = this concat _
     }
   }
 }
