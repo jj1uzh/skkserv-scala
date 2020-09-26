@@ -1,7 +1,14 @@
 # skkserv-scala
 skkservのscala実装(雑な)
 
-TODO:
+usage:
+```shell
+skkserv-scala $ sbt assembly 
+skkserv-scala $ cp default-config.json ~/.config/skkserv-scala/config.json
+skkserv-scala $ java -Xmx:??M -jar target/scala-2.13/skkserv-scala-assembly-0.1.jar
+```
+
+todo:
 - テスト
 - 辞書の昇順降順
 - 辞書の自動ダウンロード
