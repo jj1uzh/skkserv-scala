@@ -10,6 +10,5 @@ skkserv-scala $ java -Xmx:??M -jar target/scala-2.13/skkserv-scala-assembly-0.1.
 
 todo:
 - テスト
-- 辞書の昇順降順
 - 辞書の自動ダウンロード
-- 二分探索
+- S式評価?
