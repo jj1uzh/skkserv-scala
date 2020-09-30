@@ -13,6 +13,6 @@ object Config {
   def apply(path: String): Try[Config] =
     for {
       configStr <- Using(Source fromFile path)(_.getLines().mkString)
-      config <- decode[Config](configStr).toTry
+      config <- decode[Config](configStr).toTry // scalafix:ok
     } yield config
 }

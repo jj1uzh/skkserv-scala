@@ -28,7 +28,6 @@ object Main {
         }
       }
 
-    jisyoFiles foreach println
     Server.run(1178, jisyoFiles) match {
       case Failure(exception) => throw exception
       case Success(_)         => ()

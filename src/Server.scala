@@ -15,7 +15,7 @@ case class Server(src: Source, printer: PrintWriter, jisyoFiles: Vector[JisyoFil
 
   private def send: String => Unit = (str) => { printer.print(str); printer.flush() }
 
-  def run()(implicit codec: Codec): Unit =
+  def run(): Unit =
     noCatch andFinally send("0") apply {
       Request from src takeWhile (_ != Close) collect {
         case Convert(midashi) =>

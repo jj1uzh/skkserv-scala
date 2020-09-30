@@ -12,6 +12,10 @@ scalacOptions ++= Seq(
   "-Ywarn-unused"
 )
 
+run / javaOptions ++= Seq(
+  "-Xmx48M"
+)
+
 scalaSource in Compile := baseDirectory.value / "src"
 scalaSource in Test := baseDirectory.value / "test"
 
