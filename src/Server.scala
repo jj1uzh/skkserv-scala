@@ -21,10 +21,10 @@ case class Server(src: Source, printer: PrintWriter, jisyoFiles: Vector[JisyoFil
         case Convert(midashi) =>
           (jisyoFiles flatMap (_ convert midashi)).distinct match {
             case v if v.size == 0 => "4\n"
-            case v                => s"1/${v mkString "/"}/\n" tap print
+            case v                => s"1/${v mkString "/"}/\n"
           }
         case Complete(_) => "4\n" // unimplemented
-        case Version     => s"${BuildInfo.name}.${BuildInfo.version} " tap println
+        case Version     => s"${BuildInfo.name}.${BuildInfo.version} "
         case Hostname    => "" // unimplemented
       } foreach send
     }
