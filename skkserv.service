@@ -1,0 +1,10 @@
+[Unit]
+Description=skkserv written in scala
+
+[Service]
+ExecStart=java -Xmx48M -jar __PATH__
+Restart=always
+
+[Install]
+Alias=skkserv-scala
+WantedBy=default.target

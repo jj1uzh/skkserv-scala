@@ -1,12 +1,12 @@
 # skkserv-scala
 skkservのscala実装(雑な)
 
-usage:
+install:
+using systemd --user
 ```shell
-skkserv-scala $ sbt assembly 
-skkserv-scala $ cp default-config.json ~/.config/skkserv-scala/config.json
-skkserv-scala $ java -Xmx:??M -jar target/scala-2.13/skkserv-scala-assembly-0.1.jar
+skkserv-scala $ ./install.sh
 ```
+otherwise modify install.sh by youself.
 
 todo:
 - テスト

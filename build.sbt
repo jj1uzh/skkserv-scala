@@ -12,6 +12,8 @@ scalacOptions ++= Seq(
   "-Ywarn-unused"
 )
 
+assemblyJarName in assembly := "skkserv-scala.jar"
+
 run / javaOptions ++= Seq(
   "-Xmx48M"
 )
