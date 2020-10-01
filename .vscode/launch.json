@@ -10,7 +10,7 @@
       "name": "run",
       "mainClass": "skkserv.Main",
       "args": [],
-      "jvmOptions": ["-Xmx128M"]
+      "jvmOptions": ["-Xmx48M"]
     }
   ]
 }

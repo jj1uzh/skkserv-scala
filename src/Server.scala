@@ -5,8 +5,8 @@ import java.net.ServerSocket
 import scala.annotation.tailrec
 import scala.io.{Codec, Source}
 import scala.util.{Failure, Success, Using, Try}
-import scala.util.control.Exception.noCatch
 import scala.util.chaining.scalaUtilChainingOps
+import scala.util.control.Exception.noCatch
 import buildinfo.BuildInfo
 
 case class Server(src: Source, printer: PrintWriter, jisyoFiles: Vector[JisyoFile]) {
@@ -19,7 +19,7 @@ case class Server(src: Source, printer: PrintWriter, jisyoFiles: Vector[JisyoFil
     noCatch andFinally send("0") apply {
       Request from src takeWhile (_ != Close) collect {
         case Convert(midashi) =>
-          (jisyoFiles flatMap (_ convert midashi)).distinct match {
+          (jisyoFiles flatMap (_ convert midashi)).flatten.distinct match {
             case v if v.size == 0 => "4\n"
             case v                => s"1/${v mkString "/"}/\n"
           }
