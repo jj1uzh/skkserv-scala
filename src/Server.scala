@@ -5,7 +5,6 @@ import java.net.ServerSocket
 import scala.annotation.tailrec
 import scala.io.{Codec, Source}
 import scala.util.{Failure, Success, Using, Try}
-import scala.util.chaining.scalaUtilChainingOps
 import scala.util.control.Exception.noCatch
 import buildinfo.BuildInfo
 

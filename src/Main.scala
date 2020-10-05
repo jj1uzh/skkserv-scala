@@ -11,15 +11,17 @@ object Main {
 
     implicit val codec: Codec = Codec("EUC_JP")
 
+    print("loading config...")
     val config =
       Config(configPath) match {
-        case Failure(exception) => {
+        case Failure(exception) =>
           println(s"error loading config file: ${exception.getMessage()}")
           Config()
-        }
+
         case Success(value) => value
       }
 
+    println(s"loading jisyo files...")
     val jisyoFiles =
       config.jisyoPlaces flatMap { path =>
         JisyoFile fromFile path match {
@@ -28,6 +30,7 @@ object Main {
         }
       }
 
+    println("starting server...")
     Server.run(1178, jisyoFiles) match {
       case Failure(exception) => throw exception
       case Success(_)         => ()
