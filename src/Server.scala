@@ -24,7 +24,7 @@ case class Server(src: Source, printer: PrintWriter, jisyoFiles: Vector[JisyoFil
           }
         case Complete(_) => "4\n" // unimplemented
         case Version     => s"${BuildInfo.name}.${BuildInfo.version} "
-        case Hostname    => "" // unimplemented
+        case Hostname    => " " // unimplemented
       } foreach send
     }
 }
