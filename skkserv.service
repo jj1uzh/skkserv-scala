@@ -1,5 +1,5 @@
 [Unit]
-Description=skkserv written in scala
+Description=skkserv-scala
 
 [Service]
 ExecStart=java -Xmx48M -jar __PATH__

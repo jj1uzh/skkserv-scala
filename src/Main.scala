@@ -31,8 +31,8 @@ object Main {
       }
 
     println("starting server...")
-    Server.run(1178, jisyoFiles) match {
-      case Failure(exception) => throw exception
+    Server.runOnPort(1178, jisyoFiles) match {
+      case Failure(e) => println(s"[error] terminated due to error: ${e.getMessage()}")
       case Success(_)         => ()
     }
 
