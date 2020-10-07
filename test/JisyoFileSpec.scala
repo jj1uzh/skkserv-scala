@@ -3,12 +3,13 @@ package skkserv
 import org.scalatest.wordspec.AnyWordSpec
 
 class JisyoFileSpec extends AnyWordSpec {
+  import JisyoFile.Entry
 
   "#convert" should {
     "convert properly" in {
       val jf = new JisyoFile(
-        okuriAriEntries = Vector("あi /合/会/"),
-        okuriNasiEntries = Vector("ai /エーアイ/", "あい /愛/相/")
+        okuriAriEntries = Vector(Entry("あi /合/会/")),
+        okuriNasiEntries = Vector(Entry("ai /エーアイ/"), Entry("あい /愛/相/"))
       )
 
       assert(jf.convert("あi") == Some(Vector("合", "会")))
