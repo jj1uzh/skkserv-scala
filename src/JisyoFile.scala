@@ -50,8 +50,14 @@ final class JisyoFile(okuriAriEntries: Vector[Entry], okuriNasiEntries: Vector[E
   @inline private def extractCandidates(entry: Entry): Vector[String] =
     (entry dropWhile (_ != ' ') drop 2 dropRight 1 split '/').toVector
 
-  @inline private def isOkuriAri(midashi: Midashi): Boolean =
-    ('a' to 'z') contains midashi.last
+  @inline private def isOkuriAri(midashi: Midashi): Boolean = {
+    midashi.length match {
+      case 1 => false
+      case len =>
+        ('a' to 'z' contains midashi.last) &&
+        !('a' to 'z' contains midashi(len - 2))
+    }
+  }
 }
 
 object JisyoFile {
