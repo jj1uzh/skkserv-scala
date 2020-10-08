@@ -3,6 +3,8 @@ package skkserv
 import scala.util.{Failure, Success}
 import scala.io.Codec
 
+import skkserv.jisyo.JisyoFile
+
 object Main {
 
   final val configPath = s"""${System.getProperty("user.home")}/.config/skkserv-scala/config.json"""

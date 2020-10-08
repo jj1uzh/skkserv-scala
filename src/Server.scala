@@ -2,11 +2,13 @@ package skkserv
 
 import java.io.{OutputStreamWriter, PrintWriter}
 import java.net.ServerSocket
+import scala.concurrent.Future
 import scala.io.{Codec, Source}
 import scala.util.{Failure, Success, Using, Try}
 import scala.util.control.Exception.{allCatch, nonFatalCatch}
 import buildinfo.BuildInfo
-import scala.concurrent.Future
+
+import skkserv.jisyo.JisyoFile
 
 case class Server(src: Source, printer: PrintWriter, jisyoFiles: Vector[JisyoFile]) {
   import Server.Request

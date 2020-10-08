@@ -1,4 +1,4 @@
-package skkserv
+package skkserv.jisyo
 
 import org.scalatest.wordspec.AnyWordSpec
 
