@@ -5,7 +5,7 @@ import java.net.ServerSocket
 import scala.concurrent.Future
 import scala.io.{Codec, Source}
 import scala.util.{Failure, Success, Using, Try}
-import scala.util.control.Exception.{allCatch, nonFatalCatch}
+import scala.util.control.Exception.ultimately
 import buildinfo.BuildInfo
 
 import skkserv.jisyo.JisyoFile
@@ -18,12 +18,12 @@ case class Server(src: Source, printer: PrintWriter, jisyoFiles: Vector[JisyoFil
    (str) => { printer.print(str); printer.flush() }
 
   def run(): Unit =
-    nonFatalCatch andFinally send("0") apply {
+    ultimately { send("0") } apply {
       Request from src takeWhile (_ != Close) collect {
         case Convert(midashi) =>
           (jisyoFiles flatMap (_ convert midashi)).flatten.distinct match {
             case v if v.size == 0 => "4\n"
-            case v                => s"1/${v mkString "/"}/\n"
+            case v => s"1/${v mkString "/"}/\n"
           }
         case Complete(_) => "4\n" // unimplemented
         case Version     => s"${BuildInfo.name}.${BuildInfo.version} "
@@ -34,26 +34,23 @@ case class Server(src: Source, printer: PrintWriter, jisyoFiles: Vector[JisyoFil
 
 final object Server {
 
+  @inline private def loop(body: => Unit): Unit = while(true) body
+
   def runOnPort(port: Int, jisyoFiles: Vector[JisyoFile])(implicit codec: Codec): Try[Unit] = {
     import scala.concurrent.ExecutionContext.Implicits.global
-    allCatch toTry {
-      Using(new ServerSocket(port)) { listener =>
-        while (true) {
-          val socket = listener.accept()
-          Future {
-            println(s"connected")
-            val inputStream = socket.getInputStream()
-            val source = Source fromInputStream inputStream
-            val outputStream = new OutputStreamWriter(socket.getOutputStream, codec.name)
-            val printer = new PrintWriter(outputStream)
-            Server(source, printer, jisyoFiles).run()
-          } onComplete {
-            case Success(_) => "closed successfully"
-            case Failure(e) => println(s"[warn] closed connection due to error: ${e.getMessage()}")
-          }
-        }
+    Using(new ServerSocket(port)) { listener => loop {
+      val socket = listener.accept()
+      Future {
+        val inputStream = socket.getInputStream()
+        val source = Source fromInputStream inputStream
+        val outputStream = new OutputStreamWriter(socket.getOutputStream, codec.name)
+        val printer = new PrintWriter(outputStream)
+        Server(source, printer, jisyoFiles).run()
+      } onComplete {
+        case Success(_) => ()
+        case Failure(e) => println(s"[warn] connection closed: ${e.getMessage()}")
       }
-    }
+    }}
   }
 
   sealed trait Request
