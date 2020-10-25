@@ -5,7 +5,7 @@ import java.net.ServerSocket
 import scala.concurrent.Future
 import scala.io.{Codec, Source}
 import scala.util.{Failure, Success, Using, Try}
-import scala.util.control.Exception.ultimately
+import scala.util.control.Exception.{allCatch, ultimately}
 import buildinfo.BuildInfo
 
 import skkserv.jisyo.JisyoFile
@@ -38,7 +38,7 @@ final object Server {
 
   def runOnPort(port: Int, jisyoFiles: Vector[JisyoFile])(implicit codec: Codec): Try[Unit] = {
     import scala.concurrent.ExecutionContext.Implicits.global
-    Using(new ServerSocket(port)) { listener => loop {
+    allCatch toTry Using(new ServerSocket(port)) { listener => loop {
       val socket = listener.accept()
       Future {
         val inputStream = socket.getInputStream()

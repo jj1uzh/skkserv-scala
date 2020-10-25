@@ -1,6 +1,8 @@
 name := """skkserv-scala"""
 version := """0.1"""
 
+run / fork := true
+
 scalaVersion := """2.13.3"""
 scalacOptions ++= Seq(
   "-feature",
@@ -12,14 +14,14 @@ scalacOptions ++= Seq(
   "-Ywarn-unused"
 )
 
-assemblyJarName in assembly := "skkserv-scala.jar"
+assembly / assemblyJarName := "skkserv-scala.jar"
 
 run / javaOptions ++= Seq(
   "-Xmx48M"
 )
 
-scalaSource in Compile := baseDirectory.value / "src"
-scalaSource in Test := baseDirectory.value / "test"
+Compile / scalaSource := baseDirectory.value / "src"
+Test / scalaSource := baseDirectory.value / "test"
 
 libraryDependencies ++= Seq(
   "io.circe" %% "circe-core",
@@ -34,5 +36,5 @@ buildInfoPackage := """buildinfo"""
 resolvers += "Artima Maven Repository" at "https://repo.artima.com/releases"
 libraryDependencies += ("org.scalactic" %% "scalactic" % "3.2.2")
 libraryDependencies += ("org.scalatest" %% "scalatest" % "3.2.2" % "test")
-logBuffered in Test := false
-parallelExecution in Test := false
+Test / logBuffered := false
+Test / parallelExecution := false

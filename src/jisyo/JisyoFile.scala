@@ -1,6 +1,5 @@
 package skkserv.jisyo
 
-import java.io.File
 import scala.annotation.tailrec
 import scala.io.{Codec, Source}
 import scala.util.chaining.scalaUtilChainingOps
@@ -17,9 +16,7 @@ final class JisyoFile(okuriAriEntries: Vector[Entry], okuriNasiEntries: Vector[E
     * @return Some if there are one or more candidates, otherwise None
     */
   def convert(midashi: String): Option[Vector[String]] =
-    for {
-      entry <- binSearchEntry(Midashi(midashi))
-    } yield entry.candidates
+    for (entry <- binSearchEntry(Midashi(midashi))) yield entry.candidates
 
   /** @param midashi
     * @param lines must be sorted in asc
@@ -51,7 +48,8 @@ object JisyoFile {
     * @param codec
     * @return Right if successfully loaded, otherwise Left with error messages
     */
-  def fromFile(path: String)(implicit codec: Codec): Either[String, JisyoFile] = {
+  def fromFile(path: String): Either[String, JisyoFile] = {
+
     def isAsc(entries: Vector[Entry]): Boolean = {
       entries.length match {
         case 0 | 1 => true
@@ -59,24 +57,29 @@ object JisyoFile {
       }
     }
 
-    nonFatalCatch
-      .withApply (e => Left(s"[error] failed to load jisyo file ${path}: ${e.getMessage()}"))
-      .apply {
-        val src = Source fromFile new File(path)
-        val lines = src.getLines().toVector
-        val okuriAriSignIndex = lines indexOf ";; okuri-ari entries."
-        assert(okuriAriSignIndex != -1)
-        val okuriNasiSignIndex = lines indexOf ";; okuri-nasi entries."
-        assert(okuriNasiSignIndex != -1)
+    def impl(codec: Codec): Either[String, JisyoFile] =
+      nonFatalCatch
+        .withApply { e => Left(
+          s"[warn] failed to load jisyo file ${path}: ${e.getClass.getName()}: ${e.getMessage()}"
+        )}
+        .apply {
+          val src = Source.fromFile(path)(codec)
+          val lines = src.getLines().toVector
+          val okuriAriSignIndex = lines indexOf ";; okuri-ari entries."
+          assert(okuriAriSignIndex != -1)
+          val okuriNasiSignIndex = lines indexOf ";; okuri-nasi entries."
+          assert(okuriNasiSignIndex != -1)
 
-        @inline def extract: Vector[String] => Vector[Entry] =
-          _ filterNot (_ startsWith ";;") map Entry pipe (es => if (isAsc(es)) es else es.reverse)
+          @inline def extract: Vector[String] => Vector[Entry] =
+            _ filterNot (_ startsWith ";;") map Entry pipe (es => if (isAsc(es)) es else es.reverse)
 
-        val okuriAriEntries = lines.slice(okuriAriSignIndex, okuriNasiSignIndex) pipe extract
-        val okuriNasiEntries = lines.slice(okuriNasiSignIndex, lines.length) pipe extract
+          val okuriAriEntries = lines.slice(okuriAriSignIndex, okuriNasiSignIndex) pipe extract
+          val okuriNasiEntries = lines.slice(okuriNasiSignIndex, lines.length) pipe extract
 
-        Right(new JisyoFile(okuriAriEntries, okuriNasiEntries))
-      }
+          Right(new JisyoFile(okuriAriEntries, okuriNasiEntries))
+        }
+
+    impl(Codec("euc-jp")) orElse impl(Codec("utf-8")) // tmp impl
   }
 
   private val lowerAlphabets = 'a' to 'z'

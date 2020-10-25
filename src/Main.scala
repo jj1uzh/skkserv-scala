@@ -32,8 +32,10 @@ object Main {
         }
       }
 
+    val debugJisyo = new JisyoFile(Vector.empty, Vector(jisyo.JisyoFile.Entry("ほげ /skkserv-scala running!/")))
+
     println("starting server...")
-    Server.runOnPort(1178, jisyoFiles) match {
+    Server.runOnPort(1178, debugJisyo +: jisyoFiles) match {
       case Failure(e) => println(s"[error] terminated: ${e.getMessage()}")
       case Success(_) => ()
     }
