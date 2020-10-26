@@ -16,15 +16,16 @@ final class JisyoFile(okuriAriEntries: Vector[Entry], okuriNasiEntries: Vector[E
     * @return Some if there are one or more candidates, otherwise None
     */
   def convert(midashi: String): Option[Vector[String]] =
-    for (entry <- binSearchEntry(Midashi(midashi))) yield entry.candidates
+    for (entry <- binarySearch(Midashi(midashi))) yield entry.candidates
 
-  /** @param midashi
-    * @param lines must be sorted in asc
-    * @return Some if found, otherwise None
+  /** @param startsWith
+    * @return Some if there are one or more completions, otherwise None
     */
-  private def binSearchEntry(midashi: Midashi): Option[Entry] = {
+  def complete(startsWith: String): Option[Vector[String]] =
+    for (midashies <- collectStartsWith(startsWith, okuriNasiEntries)) yield midashies.map(_.value)
+
+  private def binarySearch(midashi: Midashi): Option[Entry] = {
     val entries = if (midashi.isOkuriAri) okuriAriEntries else okuriNasiEntries
-    
     @tailrec def _impl(range: Range): Option[Entry] =
       range.size match {
         case 0 => None
@@ -36,7 +37,31 @@ final class JisyoFile(okuriAriEntries: Vector[Entry], okuriNasiEntries: Vector[E
             case c if c > 0 => _impl(idx + 1 until range.end)
           }
       }
+    _impl(entries.indices)
+  }
 
+  private def collectStartsWith(str: String, entries: Vector[Entry]): Option[Vector[Midashi]] = {
+    for (pivotIndex <- binarySearchStartsWith(str, entries)) yield {
+      val view = entries.view
+      val forwardEntries = view.slice(0, pivotIndex).reverse.takeWhile(_.value.startsWith(str)).map(_.midashi).toVector
+      val backwardEntries = view.slice(pivotIndex, view.length).takeWhile(_.value.startsWith(str)).map(_.midashi).toVector
+      forwardEntries.reverse ++ backwardEntries
+    }
+  }
+
+  private def binarySearchStartsWith(str: String, entries: Vector[Entry]): Option[Int] = {
+    @tailrec def _impl(range: Range): Option[Int] = {
+      range.size match {
+        case 0 => None
+        case len =>
+          val idx = len / 2 + range.start
+          str ^<=>: entries(idx).midashi match {
+            case 0 => Some(idx)
+            case c if c < 0 => _impl(range.start until idx)
+            case c if c > 0 => _impl(idx + 1 until range.end)
+          }
+      }
+    }
     _impl(entries.indices)
   }
 }
@@ -107,6 +132,24 @@ object JisyoFile {
     }
 
     @inline def <=> = compare _
+
+    /** prefix comparing
+      * @param str prefix
+      * @return 0 if this begins with str, otherwise comparing number
+      */
+    def ^<=>:(str: String): Int = {
+      def _impl(pre: List[Char], m: List[Char]): Int =
+        (pre, m) match {
+          case (Nil, _) => 0
+          case (_, Nil) => 1
+          case (preHead::preTail, mHead::mTail) =>
+            (preHead compareTo mHead) match {
+              case 0 => _impl(preTail, mTail)
+              case c => c.sign
+            }
+        }
+      _impl(str.toList, this.value.toList)
+    }
   }
 
   final case class Entry(value: String) extends AnyVal {

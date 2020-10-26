@@ -25,9 +25,13 @@ case class Server(src: Source, printer: PrintWriter, jisyoFiles: Vector[JisyoFil
             case v if v.size == 0 => "4\n"
             case v => s"1/${v mkString "/"}/\n"
           }
-        case Complete(_) => "4\n" // unimplemented
-        case Version     => s"${BuildInfo.name}.${BuildInfo.version} "
-        case Hostname    => " " // unimplemented
+        case Complete(prefix) =>
+          (jisyoFiles flatMap (_ complete prefix)).flatten.distinct match {
+            case v if v.size == 0 => "4\n"
+            case v => s"1/${v mkString "/"}/\n"
+          }
+        case Version => s"${BuildInfo.name}.${BuildInfo.version} "
+        case Hostname => " " // unimplemented
       } foreach send
     }
 }
