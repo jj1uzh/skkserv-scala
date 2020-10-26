@@ -1,5 +1,5 @@
 name := """skkserv-scala"""
-version := """0.1"""
+version := """1.0"""
 
 run / fork := true
 
